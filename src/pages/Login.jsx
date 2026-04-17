@@ -40,7 +40,14 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-b from-brand-600 to-brand-800 flex flex-col items-center justify-center px-6 py-12 text-white">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-white/15 flex items-center justify-center text-2xl font-bold mb-3">S</div>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="bg-white rounded-lg p-2 shadow-float">
+              <img src="/logos/smartworld.svg" alt="Smart World" className="h-8 w-auto" />
+            </div>
+            <div className="bg-white rounded-lg p-2 shadow-float">
+              <img src="/logos/m3m.svg" alt="M3M" className="h-8 w-auto" />
+            </div>
+          </div>
           <h1 className="text-2xl font-bold">SocietyConnect</h1>
           <p className="text-sm opacity-80 mt-1">Smartword · M3M Soulitude · Sector 89, Gurgaon</p>
         </div>

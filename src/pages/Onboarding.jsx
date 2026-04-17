@@ -61,9 +61,26 @@ export default function Onboarding() {
     }
   }
 
+  const selectedSociety = societies.find((s) => s.id === societyId)
+  const logoFor = (name) => {
+    if (!name) return null
+    const n = name.toLowerCase()
+    if (n.includes('smart')) return '/logos/smartworld.svg'
+    if (n.includes('m3m'))   return '/logos/m3m.svg'
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-start px-4 py-10">
       <div className="w-full max-w-md">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="bg-white rounded-lg p-2 shadow-card">
+            <img src="/logos/smartworld.svg" alt="Smart World" className="h-8 w-auto" />
+          </div>
+          <div className="bg-white rounded-lg p-2 shadow-card">
+            <img src="/logos/m3m.svg" alt="M3M" className="h-8 w-auto" />
+          </div>
+        </div>
         <h1 className="text-2xl font-bold text-brand-700">Welcome!</h1>
         <p className="text-sm text-slate-600 mt-1">A few quick details so we can link you to your home.</p>
 
@@ -86,6 +103,12 @@ export default function Onboarding() {
               <option value="">Select a society</option>
               {societies.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+            {selectedSociety && logoFor(selectedSociety.name) && (
+              <div className="mt-2 flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                <img src={logoFor(selectedSociety.name)} alt={selectedSociety.name} className="h-6 w-auto" />
+                <span className="text-xs text-slate-600">{selectedSociety.name}</span>
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs font-medium text-slate-600">Unit code</label>

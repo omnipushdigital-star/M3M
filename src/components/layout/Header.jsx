@@ -26,14 +26,27 @@ export default function Header() {
     if (next && unread > 0) markAll.mutate()
   }
 
+  const societyName = profile?.society?.name
+  const logoSrc = societyName?.toLowerCase().includes('smart')
+    ? '/logos/smartworld.svg'
+    : societyName?.toLowerCase().includes('m3m')
+      ? '/logos/m3m.svg'
+      : null
+
   return (
     <header className="sticky top-0 z-30 bg-brand-600 text-white safe-pt">
       <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center font-bold">S</div>
+          {logoSrc ? (
+            <div className="bg-white rounded-md px-1.5 py-1 flex items-center">
+              <img src={logoSrc} alt={societyName} className="h-6 w-auto" />
+            </div>
+          ) : (
+            <div className="h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center font-bold">S</div>
+          )}
           <div className="leading-tight">
             <div className="font-semibold">SocietyConnect</div>
-            <div className="text-[11px] opacity-80">{profile?.society?.name ?? 'Sector 89, Gurgaon'}</div>
+            <div className="text-[11px] opacity-80">{societyName ?? 'Sector 89, Gurgaon'}</div>
           </div>
         </Link>
         <div className="flex items-center gap-1">

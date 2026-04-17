@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" width="360" height="100">
+  <rect width="360" height="100" fill="#ffffff"/>
+  <g font-family="Arial Black, Helvetica, sans-serif" font-weight="900">
+    <text x="20" y="70" font-size="76" letter-spacing="-4">
+      <tspan fill="#3aaa35">M</tspan><tspan fill="#1a5aa6">3</tspan><tspan fill="#3aaa35">M</tspan>
+    </text>
+  </g>
+  <text x="22" y="90" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#555555" letter-spacing="0.5">Our Expertise. Your Joy.</text>
+</svg>
