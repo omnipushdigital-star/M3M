@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe-area support for iOS PWA */
+.safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+.safe-pt { padding-top: env(safe-area-inset-top); }
+
+/* Scrollbar polish */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.25); }
+
+/* Hide default focus ring and use a cleaner one */
+:focus-visible { outline: 2px solid #1a3a5c; outline-offset: 2px; border-radius: 6px; }
