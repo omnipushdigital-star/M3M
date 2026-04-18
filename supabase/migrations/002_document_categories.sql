@@ -66,3 +66,10 @@ create policy documents_delete on public.documents
       where p.id = auth.uid() and p.role = 'admin'
     )
   );
+
+-- ============================================================
+-- Drop the hard-coded CHECK constraints on category columns so
+-- admins can add new categories (documents + issues) at runtime.
+-- ============================================================
+alter table public.documents drop constraint if exists documents_category_check;
+alter table public.issues    drop constraint if exists issues_category_check;
