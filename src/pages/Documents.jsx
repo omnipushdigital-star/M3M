@@ -10,6 +10,8 @@ import {
   useCreateDocumentCategory,
   useDeleteDocumentCategory
 } from '../hooks/useDocumentCategories.js'
+import { COMMUNITY_UNIFIED } from '../lib/constants.js'
+import AdSlot from '../components/ads/AdSlot.jsx'
 import Card from '../components/ui/Card.jsx'
 import Button from '../components/ui/Button.jsx'
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx'
@@ -76,6 +78,8 @@ export default function Documents() {
         </div>
       </div>
 
+      <AdSlot slotId="documents_top" size="banner" />
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16}/>
         <input
@@ -103,7 +107,7 @@ export default function Documents() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{d.name}</div>
                       <div className="text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
-                        {d.society?.name && (
+                        {!COMMUNITY_UNIFIED && d.society?.name && (
                           <span className="inline-block px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-medium">{d.society.name}</span>
                         )}
                         <span>{format(new Date(d.created_at), 'dd MMM, yyyy')}</span>
@@ -171,7 +175,7 @@ function UploadModal({ onClose, categories }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-40 flex items-end sm:items-center justify-center">
-      <form onSubmit={submit} className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-3 m-0 sm:m-4">
+      <form onSubmit={submit} className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-3 m-0 sm:m-4 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Upload document</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-slate-100"><X size={18}/></button>
@@ -224,7 +228,7 @@ function CategoryModal({ onClose, categories }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 z-40 flex items-end sm:items-center justify-center">
-      <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-4 m-0 sm:m-4">
+      <div className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl p-5 space-y-4 m-0 sm:m-4 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Document categories</h2>
           <button type="button" onClick={onClose} className="p-1 rounded-full hover:bg-slate-100"><X size={18}/></button>

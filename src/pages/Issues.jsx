@@ -10,6 +10,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
 import Button from '../components/ui/Button.jsx'
 import { ISSUE_CATEGORIES, PRIORITY_STYLES, STATUS_STYLES, STATUS_LABELS } from '../lib/constants.js'
+import AdSlot from '../components/ads/AdSlot.jsx'
 
 const TABS = [
   { key: 'all',         label: 'All' },
@@ -33,6 +34,8 @@ export default function Issues() {
         <h1 className="text-xl font-bold">Issues</h1>
         <Button as={Link} to="/issues/new" size="sm"><Plus size={16}/> Report</Button>
       </div>
+
+      <AdSlot slotId="issues_top" size="banner" />
 
       <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1">
         {TABS.map((t) => (

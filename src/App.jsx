@@ -15,6 +15,8 @@ import Payments from './pages/Payments.jsx'
 import Documents from './pages/Documents.jsx'
 import Directory from './pages/Directory.jsx'
 import Profile from './pages/Profile.jsx'
+import Hiring from './pages/Hiring.jsx'
+import Businesses from './pages/Businesses.jsx'
 
 function Protected({ children }) {
   const { session, loading } = useAuth()
@@ -56,6 +58,8 @@ export default function App() {
         <Route path="payments" element={<Payments />} />
         <Route path="documents" element={<Documents />} />
         <Route path="directory" element={<Directory />} />
+        <Route path="hiring" element={<Hiring />} />
+        <Route path="businesses" element={<Businesses />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

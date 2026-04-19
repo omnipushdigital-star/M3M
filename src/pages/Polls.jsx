@@ -9,6 +9,7 @@ import Badge from '../components/ui/Badge.jsx'
 import Button from '../components/ui/Button.jsx'
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx'
 import EmptyState from '../components/ui/EmptyState.jsx'
+import AdSlot from '../components/ads/AdSlot.jsx'
 
 function totalVotes(options = []) {
   return options.reduce((s, o) => s + (o.vote_count || 0), 0)
@@ -28,6 +29,8 @@ export default function Polls() {
           <Button size="sm" onClick={() => setModal(true)}><Plus size={16}/> New poll</Button>
         )}
       </div>
+
+      <AdSlot slotId="polls_top" size="banner" />
 
       {isLoading ? (
         <div className="flex justify-center py-10"><LoadingSpinner /></div>

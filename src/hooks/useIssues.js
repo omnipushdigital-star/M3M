@@ -8,8 +8,8 @@ import { useAuth } from './useAuth.js'
 export function useIssues(filter = 'all') {
   const { profile } = useProfile()
   return useQuery({
-    queryKey: ['issues', profile?.society_id, filter],
-    enabled: !!profile?.society_id,
+    queryKey: ['issues', filter],
+    enabled: !!profile,
     queryFn: async () => {
       let q = supabase
         .from('issues')
@@ -17,10 +17,10 @@ export function useIssues(filter = 'all') {
           *,
           reporter:profiles!issues_reported_by_fkey(id, full_name),
           unit:units(id, unit_code),
+          society:societies(id, name),
           comment_count:issue_comments(count),
           vote_count:issue_votes(count)
         `)
-        .eq('society_id', profile.society_id)
         .order('created_at', { ascending: false })
 
       if (filter === 'urgent') q = q.eq('priority', 'urgent')
@@ -51,6 +51,7 @@ export function useIssue(id) {
           reporter:profiles!issues_reported_by_fkey(id, full_name),
           assignee:profiles!issues_assigned_to_fkey(id, full_name),
           unit:units(id, unit_code),
+          society:societies(id, name),
           vote_count:issue_votes(count)
         `)
         .eq('id', id)

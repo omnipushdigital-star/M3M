@@ -17,7 +17,15 @@ export default function Onboarding() {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone]       = useState('')
   const [societyId, setSociety] = useState('')
-  const [unitCode, setUnitCode] = useState('')
+  const [blockId, setBlockId]   = useState('')
+  const [plotId, setPlotId]     = useState('')
+  const [unitId, setUnitId]     = useState('')
+  const [blocks, setBlocks]     = useState([])
+  const [plots, setPlots]       = useState([])
+  const [units, setUnits]       = useState([])
+  const [unitTaken, setUnitTaken] = useState(false)
+  const [takenBy, setTakenBy]     = useState(null)
+  const [checking, setChecking]   = useState(false)
   const [error, setError]       = useState(null)
   const [saving, setSaving]     = useState(false)
 
@@ -29,6 +37,75 @@ export default function Onboarding() {
     }
   }, [profile])
 
+  // Load blocks whenever the society changes
+  useEffect(() => {
+    setBlockId(''); setPlotId(''); setUnitId('')
+    setPlots([]); setUnits([])
+    if (!societyId) { setBlocks([]); return }
+    supabase
+      .from('blocks')
+      .select('id, block_code')
+      .eq('society_id', societyId)
+      .order('block_code')
+      .then(({ data, error }) => {
+        if (error) setError(error.message)
+        else setBlocks(data ?? [])
+      })
+  }, [societyId])
+
+  // Load plots whenever the block changes
+  useEffect(() => {
+    setPlotId(''); setUnitId(''); setUnits([])
+    if (!blockId) { setPlots([]); return }
+    supabase
+      .from('plots')
+      .select('id, plot_number')
+      .eq('block_id', blockId)
+      .then(({ data, error }) => {
+        if (error) { setError(error.message); return }
+        const sorted = (data ?? []).slice().sort((a, b) => {
+          const na = Number(a.plot_number); const nb = Number(b.plot_number)
+          if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb
+          return String(a.plot_number).localeCompare(String(b.plot_number))
+        })
+        setPlots(sorted)
+      })
+  }, [blockId])
+
+  // Load floor units whenever the plot changes
+  useEffect(() => {
+    setUnitId('')
+    if (!plotId) { setUnits([]); return }
+    supabase
+      .from('units')
+      .select('id, unit_code, floor_number')
+      .eq('plot_id', plotId)
+      .eq('unit_type', 'floor')
+      .order('floor_number')
+      .then(({ data, error }) => {
+        if (error) setError(error.message)
+        else setUnits(data ?? [])
+      })
+  }, [plotId])
+
+  // Whenever the selected unit changes, check whether some other profile
+  // has already claimed this flat (one registration per flat).
+  useEffect(() => {
+    setUnitTaken(false); setTakenBy(null)
+    if (!unitId || !profile?.id) return
+    setChecking(true)
+    supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('primary_unit_id', unitId)
+      .neq('id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setChecking(false)
+        if (data) { setUnitTaken(true); setTakenBy(data.full_name || null) }
+      })
+  }, [unitId, profile?.id])
+
   if (!session) return <Navigate to="/login" replace />
   if (loading)  return <div className="flex min-h-screen items-center justify-center"><LoadingSpinner /></div>
   if (profile?.society_id && profile?.primary_unit_id) return <Navigate to="/" replace />
@@ -37,25 +114,27 @@ export default function Onboarding() {
     e.preventDefault()
     setError(null); setSaving(true)
     try {
-      // 1. Find the unit under the chosen society matching unit_code
-      const { data: units, error: unitErr } = await supabase
-        .from('units')
-        .select('id, unit_code, unit_type, plot:plots!inner(id, block:blocks!inner(id, society_id))')
-        .eq('unit_code', unitCode.trim())
-        .eq('unit_type', 'floor')
-      if (unitErr) throw unitErr
-      const unit = (units ?? []).find((u) => u.plot?.block?.society_id === societyId)
-      if (!unit) throw new Error(`Unit "${unitCode}" not found in the selected society. Ask the committee to seed your unit first.`)
-
+      if (!unitId) throw new Error('Please select your Block, Plot, and Floor.')
+      if (unitTaken) {
+        throw new Error(
+          `This flat is already registered${takenBy ? ` by ${takenBy}` : ''}. Only one registration per flat is allowed. Please contact the committee if this is your home.`
+        )
+      }
       await update.mutateAsync({
         full_name: fullName.trim(),
         phone: phone.trim(),
         society_id: societyId,
-        primary_unit_id: unit.id
+        primary_unit_id: unitId
       })
       nav('/', { replace: true })
     } catch (err) {
-      setError(err.message || 'Could not save profile')
+      // Translate DB unique-violation into a friendlier message
+      const msg = err?.message || 'Could not save profile'
+      if (msg.includes('profiles_primary_unit_unique') || msg.includes('duplicate key')) {
+        setError('This flat is already registered. Only one registration is allowed per flat.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setSaving(false)
     }
@@ -110,17 +189,48 @@ export default function Onboarding() {
               </div>
             )}
           </div>
-          <div>
-            <label className="text-xs font-medium text-slate-600">Unit code</label>
-            <input required value={unitCode} onChange={(e) => setUnitCode(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
-              placeholder="e.g. M 100/2" />
-            <p className="text-[11px] text-slate-500 mt-1">Format: Block Plot/Floor — e.g. M 100/2</p>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs font-medium text-slate-600">Block</label>
+              <select required value={blockId} onChange={(e) => setBlockId(e.target.value)}
+                disabled={!societyId || blocks.length === 0}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                <option value="">—</option>
+                {blocks.map((b) => <option key={b.id} value={b.id}>{b.block_code}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600">Plot</label>
+              <select required value={plotId} onChange={(e) => setPlotId(e.target.value)}
+                disabled={!blockId || plots.length === 0}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                <option value="">—</option>
+                {plots.map((p) => <option key={p.id} value={p.id}>{p.plot_number}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600">Floor</label>
+              <select required value={unitId} onChange={(e) => setUnitId(e.target.value)}
+                disabled={!plotId || units.length === 0}
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm bg-white disabled:bg-slate-50 disabled:text-slate-400">
+                <option value="">—</option>
+                {units.map((u) => <option key={u.id} value={u.id}>{u.floor_number}</option>)}
+              </select>
+            </div>
           </div>
+          <p className="text-[11px] text-slate-500 -mt-1">Pick your block, plot, and floor to link your unit. Only one registration is allowed per flat.</p>
+
+          {checking && <div className="text-[11px] text-slate-500">Checking unit availability…</div>}
+          {unitTaken && (
+            <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 p-2 rounded-md">
+              This flat is already registered{takenBy ? ` by ${takenBy}` : ''}. Only one registration is allowed per flat — please choose the correct flat or contact the committee.
+            </div>
+          )}
 
           {error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded-md">{error}</div>}
 
-          <Button type="submit" size="lg" className="w-full" disabled={saving}>
+          <Button type="submit" size="lg" className="w-full" disabled={saving || !unitId || unitTaken || checking}>
             {saving ? 'Saving…' : 'Continue'}
           </Button>
         </form>

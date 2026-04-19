@@ -6,13 +6,12 @@ import { useProfile } from './useProfile.js'
 export function usePolls() {
   const { profile } = useProfile()
   return useQuery({
-    queryKey: ['polls', profile?.society_id],
-    enabled: !!profile?.society_id,
+    queryKey: ['polls'],
+    enabled: !!profile,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('polls')
-        .select('*, options:poll_options(*)')
-        .eq('society_id', profile.society_id)
+        .select('*, options:poll_options(*), society:societies(id, name)')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data ?? []
@@ -27,7 +26,7 @@ export function usePoll(id) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('polls')
-        .select('*, options:poll_options(*), creator:profiles!polls_created_by_fkey(id, full_name)')
+        .select('*, options:poll_options(*), society:societies(id, name), creator:profiles!polls_created_by_fkey(id, full_name)')
         .eq('id', id)
         .maybeSingle()
       if (error) throw error

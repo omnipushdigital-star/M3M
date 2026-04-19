@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, BarChart3, CreditCard, Users, Plus, Pin, Building2 } from 'lucide-react'
+import { AlertCircle, BarChart3, CreditCard, Users, Plus, Pin, Building2, HandHeart, Briefcase } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useProfile } from '../hooks/useProfile.js'
 import Card from '../components/ui/Card.jsx'
 import Badge from '../components/ui/Badge.jsx'
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx'
-import { STATUS_STYLES, STATUS_LABELS, CURRENCY, formatMonthYear } from '../lib/constants.js'
+import { STATUS_STYLES, STATUS_LABELS, CURRENCY, formatMonthYear, COMMUNITY_UNIFIED } from '../lib/constants.js'
 import { formatDistanceToNow } from 'date-fns'
+import AdSlot from '../components/ads/AdSlot.jsx'
 
 function StatCard({ icon: Icon, label, value, color, to }) {
   const body = (
@@ -31,23 +32,21 @@ export default function Home() {
   const month = formatMonthYear()
 
   const { data: stats } = useQuery({
-    queryKey: ['home-stats', profile?.society_id, profile?.id, month],
-    enabled: !!profile?.society_id,
+    queryKey: ['home-stats', profile?.id, month],
+    enabled: !!profile,
     queryFn: async () => {
       const [openIssues, activePolls, dueThisMonth, activeResidents, pinned, latest] = await Promise.all([
         supabase.from('issues').select('id', { count: 'exact', head: true })
-          .eq('society_id', profile.society_id).in('status', ['open','in_progress']),
+          .in('status', ['open','in_progress']),
         supabase.from('polls').select('id', { count: 'exact', head: true })
-          .eq('society_id', profile.society_id).eq('status', 'active'),
+          .eq('status', 'active'),
         supabase.from('payments').select('total_amount')
           .eq('resident_id', profile.id).eq('month_year', month).eq('status', 'pending'),
         supabase.from('profiles').select('id', { count: 'exact', head: true })
-          .eq('society_id', profile.society_id).eq('is_active', true),
-        supabase.from('announcements').select('*')
-          .eq('society_id', profile.society_id).eq('is_pinned', true)
+          .eq('is_active', true),
+        supabase.from('announcements').select('*, society:societies(id, name)').eq('is_pinned', true)
           .order('created_at', { ascending: false }).limit(2),
-        supabase.from('issues').select('id, title, status, created_at, priority')
-          .eq('society_id', profile.society_id)
+        supabase.from('issues').select('id, title, status, created_at, priority, society:societies(id, name)')
           .order('created_at', { ascending: false }).limit(2)
       ])
       const dueAmount = (dueThisMonth.data ?? []).reduce((s, p) => s + (p.total_amount || 0), 0)
@@ -77,6 +76,8 @@ export default function Home() {
         </p>
       </section>
 
+      <AdSlot slotId="home_top" size="banner" />
+
       <section className="grid grid-cols-2 gap-3">
         <StatCard icon={AlertCircle} label="Open issues"  value={stats?.openIssues ?? '—'} color="bg-orange-50 text-orange-600"   to="/issues" />
         <StatCard icon={BarChart3}   label="Active polls" value={stats?.activePolls ?? '—'} color="bg-purple-50 text-purple-600" to="/polls" />
@@ -84,7 +85,9 @@ export default function Home() {
         <StatCard icon={Users}       label="Active residents" value={stats?.residents ?? '—'} color="bg-emerald-50 text-emerald-600" />
       </section>
 
-      <section>
+      <AdSlot slotId="home_between" size="leaderboard" />
+
+      <section className="space-y-2">
         <Link to="/directory">
           <Card className="p-4 flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
@@ -93,6 +96,32 @@ export default function Home() {
             <div className="flex-1">
               <div className="font-semibold">Property directory</div>
               <div className="text-xs text-slate-500">Browse blocks, plots, units & allocations</div>
+            </div>
+            <span className="text-slate-400">›</span>
+          </Card>
+        </Link>
+
+        <Link to="/hiring">
+          <Card className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <HandHeart size={20} />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold">Hiring & Help</div>
+              <div className="text-xs text-slate-500">Maids, cooks, drivers, car cleaners & more</div>
+            </div>
+            <span className="text-slate-400">›</span>
+          </Card>
+        </Link>
+
+        <Link to="/businesses">
+          <Card className="p-4 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Briefcase size={20} />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold">Member businesses</div>
+              <div className="text-xs text-slate-500">Support fellow residents — shop, book, connect</div>
             </div>
             <span className="text-slate-400">›</span>
           </Card>
@@ -110,9 +139,10 @@ export default function Home() {
                   <div className="flex-1">
                     <div className="font-semibold">{a.title}</div>
                     {a.body && <div className="text-sm text-slate-600 mt-0.5 whitespace-pre-line">{a.body}</div>}
-                    <div className="text-[11px] text-slate-400 mt-1.5">
-                      {formatDistanceToNow(new Date(a.created_at), { addSuffix: true })}
-                      {a.tag && <Badge className="ml-2">{a.tag}</Badge>}
+                    <div className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                      {!COMMUNITY_UNIFIED && a.society?.name && <span className="px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-medium">{a.society.name}</span>}
+                      <span>{formatDistanceToNow(new Date(a.created_at), { addSuffix: true })}</span>
+                      {a.tag && <Badge className="ml-1">{a.tag}</Badge>}
                     </div>
                   </div>
                 </div>
@@ -134,8 +164,9 @@ export default function Home() {
                 <Card className="p-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="truncate font-medium">{i.title}</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">
-                      {formatDistanceToNow(new Date(i.created_at), { addSuffix: true })}
+                    <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {!COMMUNITY_UNIFIED && i.society?.name && <span className="px-1.5 py-0.5 rounded bg-brand-50 text-brand-700 font-medium">{i.society.name}</span>}
+                      <span>{formatDistanceToNow(new Date(i.created_at), { addSuffix: true })}</span>
                     </div>
                   </div>
                   <Badge color={STATUS_STYLES[i.status]}>{STATUS_LABELS[i.status]}</Badge>
